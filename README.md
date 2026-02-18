@@ -1,49 +1,46 @@
-# Yu-Gi-Oh! Card Scanner MVP (Offline-First + Centralized Sync + Moderation)
+# Yu-Gi-Oh! Card Scanner MVP (Offline-First + Centralized Sync + Moderation + Consensus)
 
-A React + Vite + TypeScript prototype for scanning Yu-Gi-Oh! cards with local-first usage and centralized moderated sync.
+A React + Vite + TypeScript prototype for scanning Yu-Gi-Oh! cards with local-first usage, centralized moderated sync, and crowdsourced consensus scoring.
 
 ## What this version adds
+- Dedicated `/login` route + auth gating for all app routes
+- Mock auth interface ready for real API auth swap (`IAuthService`)
 - Role-based access model (`viewer`, `contributor`, `moderator`, `admin`)
-- Token/session-based auth (mocked for MVP)
-- Proposal-only write pipeline: no direct canonical writes from scanning clients
-- Moderator/admin dashboard pages:
-  - Pending Proposals Queue
-  - Card Editor (admin only)
-  - Audit Log
-  - User/Device Trust View
-  - Rollback / Version History
-- Validation + anti-defacement controls:
-  - setCode, ATK/DEF, required fields checks
-  - rate limiting per device
-  - low-confidence and high-rejection-rate flagging
-  - soft-delete-friendly canonical schema (`deprecatedAt`)
-  - version + updatedAt increment on accepted edits
+- Proposal-only canonical write pipeline (no direct canonical writes from scanner clients)
+- Observation outbox + `/observations` sync path for consensus aggregation
+- Consensus model entities: `observations`, `claims`, `trust_profiles`
+- Admin dashboard adds **Consensus Queue** + claim detail/evidence view
+- Community verification indicators in collection UI
 
-## Install / Run
-```bash
-npm install
-npm run dev
-```
+## Auth & routes
+- Public: `/login`
+- Authenticated: `/scan`, `/results/:scanId`, `/collection`, `/sync`, `/data`, `/settings`
+- Role-protected: `/admin/*` for moderator/admin
 
 ## Offline-first behavior
 - Canonical cache mirrors central DB in IndexedDB (`cache_*`).
 - User collection/scans are local (`user_*`).
-- Edits/corrections are queued in `outbox_proposals`.
-- Sync uploads outbox proposals to `/proposals`; moderators approve/reject before canonical changes apply.
+- Outboxes:
+  - `outbox_proposals` for moderation proposals
+  - `outbox_observations` for consensus evidence
+- Sync uploads proposals to `/proposals`, observations to `/observations`, and fetches claims in pull updates.
+
+## Consensus scoring (MVP)
+- Group by `(targetId + fieldPath + valueNorm)`
+- Weight:
+  - `(0.5 + 0.5*ocrConfidence) * (0.6 + 0.4*captureQualityScore) * (0.5 + 0.5*reputationScore)`
+- `consensusScore = winningValueWeight / totalWeight`
+- Auto-accept policy:
+  - `consensusScore >= 0.85 && consensusCount >= 3 && disagreementCount <= 1`
 
 ## Security model (MVP)
-- All write-like endpoints require authenticated session/token.
-- Client never writes canonical tables directly.
-- Admin routes protected by role checks.
-- OCR is treated as untrusted input and validated in proposal moderation.
-
-## Bundle portability
-- Export/import local bundle JSON (cache only / with user data).
-- Central snapshot download returns checksum metadata (placeholder signing path).
+- Auth required for writes
+- Admin routes require role checks
+- OCR input treated as untrusted
+- Validation + rate limiting + trust/reputation heuristics + audit logging
 
 ## API integration
-- `HttpSyncService` expects:
-  - `GET /sync/pull`
-  - `POST /proposals`
-  - `GET /snapshot/latest`
-- Add moderator APIs matching `IModerationService` for real backend.
+- `GET /sync/pull`
+- `POST /proposals`
+- `POST /observations`
+- `GET /snapshot/latest`

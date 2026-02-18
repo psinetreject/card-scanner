@@ -5,7 +5,7 @@ export function CollectionPage() {
   const services = useServices();
   const [query, setQuery] = useState('');
   const [entries, setEntries] = useState<{ entryId: string; cardId: string; quantity: number; notes?: string }[]>([]);
-  const [cards, setCards] = useState<{ id: string; name: string }[]>([]);
+  const [cards, setCards] = useState<{ id: string; name: string; consensus?: Record<string, { consensusScore: number; disagreementCount: number }> }[]>([]);
   const [scans, setScans] = useState<{ scanId: string; matchedCardId?: string; timestamp: string }[]>([]);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export function CollectionPage() {
         services.storage.getScans(),
       ]);
       setEntries(collection);
-      setCards(cacheCards.map((c) => ({ id: c.id, name: c.name })));
+      setCards(cacheCards.map((c) => ({ id: c.id, name: c.name, consensus: c.consensus } as any)));
       setScans(userScans);
     });
   }, [services.storage]);
@@ -37,6 +37,7 @@ export function CollectionPage() {
             <div className="card" key={e.entryId}>
               <strong>{cards.find((c) => c.id === e.cardId)?.name ?? e.cardId}</strong> × {e.quantity}
               <div><small className="muted">Local user entry. Canonical card from cache mirror.</small></div>
+              {(() => { const meta = cards.find((c) => c.id === e.cardId)?.consensus?.['cards.name']; if (!meta) return null; return <div><small className={meta.consensusScore >= 0.85 && meta.disagreementCount <= 1 ? 'status-good' : 'status-warn'}>{meta.consensusScore >= 0.85 && meta.disagreementCount <= 1 ? 'Community verified' : 'Disputed'}</small></div>; })()}
             </div>
           ))}
           {visible.length === 0 && <p>No entries yet.</p>}

@@ -5,6 +5,7 @@ import { CardEditorPage } from './CardEditorPage';
 import { AuditLogPage } from './AuditLogPage';
 import { TrustViewPage } from './TrustViewPage';
 import { RollbackPage } from './RollbackPage';
+import { ConsensusQueuePage } from './ConsensusQueuePage';
 
 type Props = { session: AuthSession };
 
@@ -21,6 +22,7 @@ export function AdminDashboardPage({ session }: Props) {
         {session.role === 'admin' && <NavLink to="editor">Card Editor</NavLink>}
         <NavLink to="audit">Audit Log</NavLink>
         <NavLink to="trust">User/Device Trust</NavLink>
+        <NavLink to="consensus">Consensus Queue</NavLink>
         {session.role === 'admin' && <NavLink to="rollback">Rollback</NavLink>}
       </div>
 
@@ -30,6 +32,7 @@ export function AdminDashboardPage({ session }: Props) {
         <Route path="audit" element={<AuditLogPage session={session} />} />
         <Route path="trust" element={<TrustViewPage session={session} />} />
         <Route path="rollback" element={<RollbackPage session={session} />} />
+        <Route path="consensus" element={<ConsensusQueuePage session={session} />} />
       </Routes>
     </section>
   );

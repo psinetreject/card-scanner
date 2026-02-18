@@ -20,7 +20,7 @@ export function ResultPage() {
       }
     | undefined;
 
-  if (!state) return <p>No scan result yet. Scan a card first.</p>;
+  if (!state) return <p>No scan result yet. Scan a card first from /scan.</p>;
 
   const confirm = async () => {
     await services.storage.init();
@@ -61,6 +61,36 @@ export function ResultPage() {
         relatedScanId: scanId,
         status: 'queued',
       });
+    }
+
+
+    if (state.match.top) {
+      await services.storage.queueObservation({
+        localObservationId: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        targetType: 'card',
+        targetId: state.match.top.card.id,
+        fieldPath: 'cards.name',
+        value: state.ocr.name ?? state.match.top.card.name,
+        ocrConfidence: state.ocr.confidence ?? 0.5,
+        captureQualityScore: Math.min(1, Math.max(0.2, state.match.top.score)),
+        status: 'queued',
+        scanRef: scanId,
+      });
+      if (state.match.top.print?.printId && state.ocr.setCode) {
+        await services.storage.queueObservation({
+          localObservationId: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          targetType: 'print',
+          targetId: state.match.top.print.printId,
+          fieldPath: 'prints.setCode',
+          value: state.ocr.setCode,
+          ocrConfidence: state.ocr.confidence ?? 0.5,
+          captureQualityScore: Math.min(1, Math.max(0.2, state.match.top.score)),
+          status: 'queued',
+          scanRef: scanId,
+        });
+      }
     }
 
     if (state.match.top) {
@@ -108,7 +138,7 @@ export function ResultPage() {
         <textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Fix OCR, set code, rarity, etc. This becomes a moderation proposal." />
       </div>
       <button onClick={confirm}>Confirm & add to collection</button>{' '}
-      <button className="secondary" onClick={() => navigate('/')}>Rescan</button>
+      <button className="secondary" onClick={() => navigate('/scan')}>Rescan</button>
     </section>
   );
 }

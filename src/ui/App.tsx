@@ -1,4 +1,5 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import React from 'react';
+import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ScanPage } from './pages/ScanPage';
 import { CollectionPage } from './pages/CollectionPage';
 import { SyncPage } from './pages/SyncPage';
@@ -7,66 +8,62 @@ import { SettingsPage } from './pages/SettingsPage';
 import { ResultPage } from './pages/ResultPage';
 import { useEffect, useState } from 'react';
 import { useServices } from './hooks/useServices';
-import type { AuthSession, Role } from '../core/types';
+import type { AuthSession } from '../core/types';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { LoginPage } from './pages/LoginPage';
+
+function Protected({ session, children }: { session?: AuthSession; children: React.ReactNode }) {
+  const location = useLocation();
+  if (!session) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  return children;
+}
 
 export function App() {
   const services = useServices();
+  const navigate = useNavigate();
   const [session, setSession] = useState<AuthSession>();
 
   useEffect(() => {
-    services.storage.init().then(async () => {
-      const existing = await services.storage.getSession();
-      if (existing) setSession(existing);
-    });
+    services.storage.init().then(async () => setSession(await services.storage.getSession()));
   }, [services.storage]);
 
-  const loginAs = async (role: Role) => {
-    const s = await services.auth.login(role);
-    await services.storage.setSession(s);
-    setSession(s);
+  const signOut = async () => {
+    await services.auth.logout();
+    await services.storage.clearSession();
+    setSession(undefined);
+    navigate('/login');
   };
-
-  if (!session) {
-    return (
-      <div className="app-shell">
-        <header><h1>Yu-Gi-Oh! Scanner MVP</h1><p>Select role (mock auth)</p></header>
-        <main className="panel">
-          <div className="grid cols-2">
-            {(['viewer', 'contributor', 'moderator', 'admin'] as Role[]).map((r) => (
-              <button key={r} onClick={() => loginAs(r)}>Login as {r}</button>
-            ))}
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="app-shell">
       <header>
         <h1>Yu-Gi-Oh! Scanner MVP</h1>
-        <p>Role: <strong>{session.role}</strong> · Device: {session.deviceId}</p>
+        <p>{session ? <>Signed in as <strong>{session.userId}</strong> ({session.role})</> : 'Please sign in'}</p>
+        {session && <button className="secondary" onClick={signOut}>Sign out</button>}
       </header>
       <main>
         <Routes>
-          <Route path="/" element={<ScanPage />} />
-          <Route path="/result" element={<ResultPage />} />
-          <Route path="/collection" element={<CollectionPage />} />
-          <Route path="/sync" element={<SyncPage />} />
-          <Route path="/data" element={<DataManagementPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/admin/*" element={<AdminDashboardPage session={session} />} />
+          <Route path="/login" element={session ? <Navigate to="/scan" replace /> : <LoginPage />} />
+          <Route path="/scan" element={<Protected session={session}><ScanPage /></Protected>} />
+          <Route path="/results/:scanId" element={<Protected session={session}><ResultPage /></Protected>} />
+          <Route path="/collection" element={<Protected session={session}><CollectionPage /></Protected>} />
+          <Route path="/sync" element={<Protected session={session}><SyncPage /></Protected>} />
+          <Route path="/data" element={<Protected session={session}><DataManagementPage /></Protected>} />
+          <Route path="/settings" element={<Protected session={session}><SettingsPage /></Protected>} />
+          <Route path="/admin/*" element={<Protected session={session}>{session ? <AdminDashboardPage session={session} /> : <div />}</Protected>} />
+          <Route path="*" element={<Navigate to={session ? '/scan' : '/login'} replace />} />
         </Routes>
       </main>
-      <nav>
-        <NavLink to="/">Scan</NavLink>
-        <NavLink to="/collection">Collection</NavLink>
-        <NavLink to="/sync">Sync</NavLink>
-        <NavLink to="/data">Data</NavLink>
-        <NavLink to="/settings">Settings</NavLink>
-        {(session.role === 'moderator' || session.role === 'admin') && <NavLink to="/admin">Admin</NavLink>}
-      </nav>
+      {session && (
+        <nav>
+          <NavLink to="/scan">Scan</NavLink>
+          <NavLink to="/collection">Collection</NavLink>
+          <NavLink to="/sync">Sync</NavLink>
+          <NavLink to="/data">Data</NavLink>
+          <NavLink to="/settings">Settings</NavLink>
+          {(session.role === 'moderator' || session.role === 'admin') && <NavLink to="/admin">Admin</NavLink>}
+        </nav>
+      )}
     </div>
   );
 }

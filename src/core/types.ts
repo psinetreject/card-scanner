@@ -1,5 +1,12 @@
 export type Role = 'viewer' | 'contributor' | 'moderator' | 'admin';
 
+export type ConsensusMeta = {
+  consensusScore: number;
+  consensusCount: number;
+  disagreementCount: number;
+  lastComputedAt: string;
+};
+
 export type Card = {
   id: string;
   name: string;
@@ -14,6 +21,7 @@ export type Card = {
   updatedAt: string;
   version: number;
   deprecatedAt?: string;
+  consensus?: Record<string, ConsensusMeta>;
 };
 
 export type Print = {
@@ -28,6 +36,7 @@ export type Print = {
   updatedAt: string;
   version: number;
   deprecatedAt?: string;
+  consensus?: Record<string, ConsensusMeta>;
 };
 
 export type Alias = {
@@ -93,6 +102,65 @@ export type OutboxProposal = {
   lastError?: string;
 };
 
+export type ObservationStatus = 'active' | 'withdrawn' | 'spam';
+
+export type OutboxObservation = {
+  localObservationId: string;
+  createdAt: string;
+  targetType?: 'card' | 'print';
+  targetId?: string;
+  fieldPath: string;
+  value: string | number;
+  ocrConfidence: number;
+  captureQualityScore: number;
+  status: 'queued' | 'sent' | 'failed';
+  scanRef?: string;
+  lastError?: string;
+};
+
+export type Observation = {
+  observationId: string;
+  createdAt: string;
+  principalId: string;
+  scanRef?: string;
+  cardId?: string;
+  printId?: string;
+  fieldPath: string;
+  value: string | number;
+  valueNorm: string;
+  ocrConfidence: number;
+  captureQualityScore: number;
+  evidenceImageKey?: string;
+  status: ObservationStatus;
+};
+
+export type Claim = {
+  claimId: string;
+  createdAt: string;
+  targetType: 'card' | 'print';
+  targetId: string;
+  fieldPath: string;
+  proposedValue: string | number;
+  proposedValueNorm: string;
+  generatedFrom: string[];
+  status: 'open' | 'accepted' | 'rejected' | 'superseded';
+  consensusScore: number;
+  consensusCount: number;
+  disagreementCount: number;
+  lastComputedAt: string;
+  competingValues: Array<{ valueNorm: string; totalWeight: number; principals: number }>;
+};
+
+export type TrustProfile = {
+  principalId: string;
+  createdAt: string;
+  lastUpdatedAt: string;
+  reputationScore: number;
+  acceptedCount: number;
+  rejectedCount: number;
+  spamFlagCount: number;
+};
+
 export type ModerationProposal = {
   proposalId: string;
   createdAt: string;
@@ -111,10 +179,10 @@ export type AuditLogEntry = {
   auditId: string;
   timestamp: string;
   proposalId?: string;
-  action: 'accepted' | 'rejected' | 'rollback' | 'admin_edit';
+  action: 'accepted' | 'rejected' | 'rollback' | 'admin_edit' | 'claim_accepted' | 'claim_rejected' | 'claim_superseded';
   actorUserId: string;
   actorRole: Role;
-  entity: 'card' | 'print' | 'alias';
+  entity: 'card' | 'print' | 'alias' | 'claim';
   entityId: string;
   diff: ProposalDiff;
   notes?: string;

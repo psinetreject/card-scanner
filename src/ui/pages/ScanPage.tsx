@@ -18,7 +18,8 @@ export function ScanPage() {
     const ocr = await services.ocr.extract(processedBlob);
     const match = await services.matcher.run({ extractedName: ocr.name, extractedSetCode: ocr.setCode });
 
-    navigate('/result', {
+    const scanId = crypto.randomUUID();
+    navigate(`/results/${scanId}`, {
       state: {
         ocr,
         match,
