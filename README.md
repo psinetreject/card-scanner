@@ -89,3 +89,12 @@ Use mkcert and Vite `server.https` config with local cert/key, then open `https:
 
 ## Future native path
 Keep `core` matching contracts portable; replace hashing/feature extraction with native OpenCV pipeline and keep sync/consensus/draft APIs stable.
+
+
+## Camera Permissions Troubleshooting
+- Open `/scan` and click **Enable Camera** to trigger browser permission prompt.
+- If denied, use **Try again** after allowing Camera in site settings (lock/camera icon in address bar).
+- If error says no device found, verify your device has an available camera.
+- If camera is busy (`NotReadableError`), close other apps/tabs using the camera.
+- On mobile LAN testing, prefer HTTPS if camera is blocked on non-localhost origins.
+- See **Test on Phone (LAN)** and optional HTTPS notes above.

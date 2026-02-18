@@ -20,12 +20,28 @@ interface ScannerDb extends DBSchema {
   auth_session: { key: string; value: AuthSession };
 }
 
+type StoreName =
+  | 'cache_cards'
+  | 'cache_prints'
+  | 'cache_aliases'
+  | 'cache_image_features'
+  | 'cache_feature_packs'
+  | 'cache_claims'
+  | 'cache_drafts_status'
+  | 'user_collection'
+  | 'user_scans'
+  | 'outbox_proposals'
+  | 'outbox_observations'
+  | 'outbox_drafts'
+  | 'sync_state'
+  | 'auth_session';
+
 const defaultSyncState: SyncState = { lastCardsVersion: 1, lastPrintsVersion: 1, lastAliasesVersion: 1, lastImagesVersion: 1 };
 
 export class IndexedDbStorageService implements IStorageService {
   private dbPromise = openDB<ScannerDb>('ygo-scanner', 5, {
     upgrade(db) {
-      const create = (name: string, keyPath?: string) => { if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, keyPath ? { keyPath } : undefined); };
+      const create = (name: StoreName, keyPath?: string) => { if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, keyPath ? { keyPath } : undefined); };
       create('cache_cards', 'id');
       create('cache_prints', 'printId');
       create('cache_aliases', 'aliasId');
@@ -89,7 +105,11 @@ export class IndexedDbStorageService implements IStorageService {
   async getDraftStatusCache() { return (await this.dbPromise).getAll('cache_drafts_status'); }
   async setDraftStatusCache(status: DraftStatusCache) { await (await this.dbPromise).put('cache_drafts_status', status); }
   async setSyncState(state: SyncState) { await (await this.dbPromise).put('sync_state', state, 'global'); }
-  async getSyncState() { return ((await this.dbPromise).get('sync_state', 'global')) ?? defaultSyncState; }
+  async getSyncState(): Promise<SyncState> {
+    const db = await this.dbPromise;
+    const state = await db.get('sync_state', 'global');
+    return state ?? defaultSyncState;
+  }
   async setSession(session: AuthSession) { await (await this.dbPromise).put('auth_session', session, 'current'); }
   async getSession() { return (await this.dbPromise).get('auth_session', 'current'); }
   async clearSession() { await (await this.dbPromise).delete('auth_session', 'current'); }
@@ -116,7 +136,7 @@ export class IndexedDbStorageService implements IStorageService {
 
   async importSnapshot(snapshot: LocalBundle, mode: 'replace' | 'merge'): Promise<void> {
     const db = await this.dbPromise;
-    const stores: (keyof ScannerDb)[] = ['cache_cards', 'cache_prints', 'cache_aliases', 'cache_image_features', 'cache_feature_packs', 'cache_claims', 'cache_drafts_status', 'user_collection', 'user_scans', 'outbox_proposals', 'outbox_observations', 'outbox_drafts'];
+    const stores: StoreName[] = ['cache_cards', 'cache_prints', 'cache_aliases', 'cache_image_features', 'cache_feature_packs', 'cache_claims', 'cache_drafts_status', 'user_collection', 'user_scans', 'outbox_proposals', 'outbox_observations', 'outbox_drafts'];
     const tx = db.transaction([...stores, 'sync_state'], 'readwrite');
     if (mode === 'replace') await Promise.all(stores.map((s) => tx.objectStore(s).clear()));
 

@@ -4,9 +4,11 @@ import type { ICameraService } from '../../services/interfaces';
 type Props = {
   camera: ICameraService;
   onCapture: (blob: Blob) => void;
+  enabled: boolean;
+  onStop: () => void;
 };
 
-export function CameraPreview({ camera, onCapture }: Props) {
+export function CameraPreview({ camera, onCapture, enabled, onStop }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selected, setSelected] = useState<string>('');
@@ -15,7 +17,7 @@ export function CameraPreview({ camera, onCapture }: Props) {
   useEffect(() => {
     let active = true;
     const init = async () => {
-      if (!videoRef.current) return;
+      if (!videoRef.current || !enabled) return;
       try {
         await camera.start(videoRef.current, selected || undefined);
         const cams = await camera.listDevices();
@@ -28,13 +30,22 @@ export function CameraPreview({ camera, onCapture }: Props) {
     return () => {
       active = false;
       camera.stop();
+      if (videoRef.current) videoRef.current.srcObject = null;
     };
-  }, [camera, selected]);
+  }, [camera, selected, enabled]);
+
+  if (!enabled) return null;
 
   const capture = async () => {
     if (!videoRef.current) return;
     const blob = await camera.capture(videoRef.current);
     onCapture(blob);
+  };
+
+  const stop = () => {
+    camera.stop();
+    if (videoRef.current) videoRef.current.srcObject = null;
+    onStop();
   };
 
   return (
@@ -59,7 +70,10 @@ export function CameraPreview({ camera, onCapture }: Props) {
         </div>
       </div>
       <p><small className="muted">{hint}</small></p>
-      <button onClick={capture}>Scan card</button>
+      <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+        <button onClick={capture}>Scan card</button>
+        <button className="secondary" onClick={stop}>Stop Camera</button>
+      </div>
     </div>
   );
 }

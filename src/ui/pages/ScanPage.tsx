@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CameraPreview } from '../components/CameraPreview';
+import { CameraPermissionGate } from '../components/CameraPermissionGate';
 import { preprocessImage } from '../../core/preprocess';
 import { computeAverageHash, extractVisualCrops } from '../../core/imageHash';
 import { useServices } from '../hooks/useServices';
@@ -19,7 +19,7 @@ export function ScanPage() {
     const [hashFull, hashArt] = await Promise.all([computeAverageHash(crops.full), computeAverageHash(crops.art)]);
 
     const processedBlob = await new Promise<Blob>((resolve) => processed.toBlob((x) => resolve(x!), 'image/jpeg', 0.9));
-    const ocrPromise = services.ocr.extract(processedBlob).catch(() => ({ text: '', confidence: 0 }));
+    const ocrPromise: Promise<{ text: string; name?: string; setCode?: string; confidence?: number }> = services.ocr.extract(processedBlob).catch(() => ({ text: '', name: undefined, setCode: undefined, confidence: 0 }));
 
     const ocr = await ocrPromise;
     const match = await services.matcher.run({ visualHashFull: hashFull, visualHashArt: hashArt, extractedSetCode: ocr.setCode, extractedName: ocr.name });
@@ -44,7 +44,7 @@ export function ScanPage() {
         </label>
         <p><small className="muted">Status: {status}. Visual confidence drives ranking; OCR only validates/disambiguates.</small></p>
       </div>
-      <CameraPreview camera={services.camera} onCapture={onCapture} />
+      <CameraPermissionGate camera={services.camera} onCapture={onCapture} />
     </section>
   );
 }
