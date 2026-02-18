@@ -48,6 +48,30 @@ export type Alias = {
   version: number;
 };
 
+export type ImageFeature = {
+  featureId: string;
+  imageKey?: string;
+  cardId?: string;
+  printId?: string;
+  phash: string;
+  dhash?: string;
+  width: number;
+  height: number;
+  roiType: 'full_card' | 'art_box' | 'name_band';
+  packId: string;
+  updatedAt: string;
+  version: number;
+};
+
+export type FeaturePack = {
+  packId: string;
+  name: string;
+  description?: string;
+  installedAt?: string;
+  bytesEstimate: number;
+  status: 'installed' | 'available';
+};
+
 export type UserCollectionEntry = {
   entryId: string;
   cardId: string;
@@ -175,6 +199,8 @@ export type Draft = {
   publishedAt?: string;
   publishedBy?: string;
   confidence?: number;
+  visualFeatures?: { phashFull?: string; phashArt?: string; dhashFull?: string };
+  evidenceImageThumb?: string;
 };
 
 export type OutboxDraft = {
@@ -187,6 +213,8 @@ export type OutboxDraft = {
   targetId?: string;
   status: 'queued' | 'sent' | 'failed';
   lastError?: string;
+  visualFeatures?: { phashFull?: string; phashArt?: string; dhashFull?: string };
+  evidenceImageThumb?: string;
 };
 
 export type DraftStatusCache = {
@@ -254,13 +282,16 @@ export type SyncState = {
 export type ScanInput = {
   extractedName?: string;
   extractedSetCode?: string;
+  visualHashFull?: string;
+  visualHashArt?: string;
 };
 
 export type MatchCandidate = {
   card: Card;
   print?: Print;
   score: number;
-  reason: 'set_code' | 'ocr_name' | 'alias' | 'phash';
+  reason: 'visual' | 'set_code' | 'ocr_name' | 'alias' | 'phash';
+  details?: string;
 };
 
 export type MatchResult = {

@@ -1,43 +1,38 @@
-# Architecture Overview
+# Architecture Overview (Visual-First Pivot)
 
-## Central DB is authoritative
-Canonical entities (`cards`, `prints`, `aliases`) are cloud-owned and versioned.
+## Core principle
+- Central DB authoritative.
+- Client is offline-first mirror + local user data + outboxes.
+- Canonical writes are moderation-gated.
 
-## Auth + route gating
-- `/login` is public
-- Main routes require authenticated session
-- `/admin/*` requires moderator/admin role checks
+## Visual-first recognition
+Primary identification is local visual matching against `cache_image_features`.
+OCR is secondary for validation/disambiguation only.
 
-## Local DB partitions
-- `cache_*`: canonical mirror + consensus/draft status metadata
-- `user_*`: local collection/scans/settings
-- `outbox_proposals`: moderated edit proposals
-- `outbox_observations`: consensus evidence submissions
-- `outbox_drafts`: publishable card/print drafts from uncertain scans
+### Local matching pipeline
+1. Capture and preprocess frame.
+2. Generate full-card + art-box crops.
+3. Compute perceptual hash-like features.
+4. Compare against local cached features (Hamming distance).
+5. Re-rank using weighted full/art scores.
+6. Apply OCR assist only after visual shortlist is built.
 
-## Write safety model
-- No direct canonical writes from scanner flow.
-- Contributors submit observations/proposals/drafts.
-- Moderators/Admin review and publish.
+## Data model additions for visual matching
+- `cache_image_features`
+- `cache_feature_packs`
 
-## Consensus entities
-- `observations`
-- `claims`
-- `trust_profiles`
-
-## Draft publishing entities
-- `drafts`
-- `publish_events`
+## Moderation publishing additions
+- `outbox_drafts` on client
+- central `drafts` + `publish_events`
+- moderator publish path writes canonical records with validation + version bump
 
 ## Sync loop
-1. Pull canonical + claim + draft status updates.
+1. Pull canonical + image features + consensus + draft status updates.
 2. Upload proposals.
 3. Upload observations.
 4. Upload drafts.
-5. Moderator/admin decisions become visible on next sync.
+5. Consume moderation outcomes in next pull.
 
-## Role policy
-- Guest: local scanning/collection only (no sync writes)
-- Contributor: can submit observations/proposals/drafts
-- Moderator/Admin: can review claims/drafts and publish
-- Admin: rollback and privileged canonical management
+## Scalability path
+- Web MVP: hash-based matching + pack management.
+- Native Android: OpenCV/NN feature extraction, richer descriptors, faster re-ranking.

@@ -1,4 +1,4 @@
-import type { Alias, Card, Print } from '../core/types';
+import type { Alias, Card, FeaturePack, ImageFeature, Print } from '../core/types';
 
 const now = new Date().toISOString();
 
@@ -21,4 +21,18 @@ export const seedAliases: Alias[] = [
   { aliasId: 'a2', cardId: 'c2', aliasText: 'DM', locale: 'en', updatedAt: now, version: 1 },
   { aliasId: 'a3', cardId: 'c3', aliasText: 'MST', locale: 'en', updatedAt: now, version: 1 },
   { aliasId: 'a4', cardId: 'c4', aliasText: 'Stratos', locale: 'en', updatedAt: now, version: 1 },
+];
+
+export const seedFeaturePacks: FeaturePack[] = [
+  { packId: 'base-core', name: 'Base Core Pack', description: 'Starter offline pack for MVP demo cards.', bytesEstimate: 22000, status: 'installed', installedAt: now },
+  { packId: 'set-expanded', name: 'Expanded Set Pack', description: 'Additional set-oriented features (mock).', bytesEstimate: 125000, status: 'available' },
+];
+
+export const seedImageFeatures: ImageFeature[] = [
+  { featureId: 'f1', cardId: 'c1', printId: 'p1', phash: '8f0f0f0ff0f0f0f0', width: 320, height: 466, roiType: 'full_card', packId: 'base-core', updatedAt: now, version: 1 },
+  { featureId: 'f2', cardId: 'c1', printId: 'p1', phash: 'f0f08f8f7070f0f0', width: 256, height: 192, roiType: 'art_box', packId: 'base-core', updatedAt: now, version: 1 },
+  { featureId: 'f3', cardId: 'c2', printId: 'p2', phash: '00ff0f0ff0f00fff', width: 320, height: 466, roiType: 'full_card', packId: 'base-core', updatedAt: now, version: 1 },
+  { featureId: 'f4', cardId: 'c2', printId: 'p2', phash: 'f0a0a0f0f0a0a0f0', width: 256, height: 192, roiType: 'art_box', packId: 'base-core', updatedAt: now, version: 1 },
+  { featureId: 'f5', cardId: 'c3', printId: 'p3', phash: '3f3f0f0f0f0f3f3f', width: 320, height: 466, roiType: 'full_card', packId: 'base-core', updatedAt: now, version: 1 },
+  { featureId: 'f6', cardId: 'c4', printId: 'p4', phash: 'f00ff00ff00ff00f', width: 320, height: 466, roiType: 'full_card', packId: 'base-core', updatedAt: now, version: 1 },
 ];

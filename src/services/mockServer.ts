@@ -17,7 +17,7 @@ import type {
   UserTrustStats,
 } from '../core/types';
 import { validateCard, validatePrint, validateProposalPayload } from '../core/validation';
-import { seedAliases, seedCards, seedPrints } from '../data/seed';
+import { seedAliases, seedCards, seedFeaturePacks, seedImageFeatures, seedPrints } from '../data/seed';
 
 const rolePriority: Role[] = ['guest', 'viewer', 'contributor', 'moderator', 'admin'];
 const now = () => new Date().toISOString();
@@ -27,6 +27,8 @@ class MockCentralServer {
   private cards: Card[] = structuredClone(seedCards);
   private prints: Print[] = structuredClone(seedPrints);
   private aliases = structuredClone(seedAliases);
+  private imageFeatures = structuredClone(seedImageFeatures);
+  private featurePacks = structuredClone(seedFeaturePacks);
   private proposals: ModerationProposal[] = [];
   private audits: AuditLogEntry[] = [];
   private claims: Claim[] = [];
@@ -54,6 +56,8 @@ class MockCentralServer {
       cards: this.cards.filter((c) => !c.deprecatedAt),
       prints: this.prints.filter((p) => !p.deprecatedAt),
       aliases: this.aliases,
+      imageFeatures: this.imageFeatures.filter((f: any) => this.featurePacks.some((p: any) => p.packId === f.packId && p.status === 'installed')),
+      featurePacks: this.featurePacks,
       claims: this.claims,
       draftStatuses: this.draftStatuses.filter((d) => d.draftId.includes(session.userId) || session.role === 'moderator' || session.role === 'admin'),
       syncState: {
@@ -107,7 +111,7 @@ class MockCentralServer {
     for (const d of drafts) {
       if (!d.proposedPayload || Object.keys(d.proposedPayload).length === 0) { failed.push({ id: d.localDraftId, error: 'Missing proposed payload' }); continue; }
       const draftId = `${session.userId}-${d.localDraftId}`;
-      this.drafts.push({ draftId, createdAt: d.createdAt, createdBy: session.userId, sourceScanRef: d.sourceScanId, targetType: d.targetType, targetId: d.targetId, extractedFields: d.extractedFields, proposedPayload: d.proposedPayload, status: 'new' });
+      this.drafts.push({ draftId, createdAt: d.createdAt, createdBy: session.userId, sourceScanRef: d.sourceScanId, targetType: d.targetType, targetId: d.targetId, extractedFields: d.extractedFields, proposedPayload: d.proposedPayload, visualFeatures: d.visualFeatures, evidenceImageThumb: d.evidenceImageThumb, status: 'new' });
       this.draftStatuses.push({ draftId, status: 'new', updatedAt: now() });
       acceptedIds.push(d.localDraftId);
     }
@@ -235,7 +239,7 @@ class MockCentralServer {
 
   downloadSnapshot(session: AuthSession) {
     this.requireRole(session, 'viewer');
-    const payload = { appVersion: '0.4.0', schemaVersion: 4, exportedAt: now(), cache_cards: this.cards.filter((c) => !c.deprecatedAt), cache_prints: this.prints.filter((p) => !p.deprecatedAt), cache_aliases: this.aliases, claims: this.claims, draft_statuses: this.draftStatuses, user_collection: [], user_scans: [], outbox_proposals: [], outbox_observations: [], outbox_drafts: [], sync_state: this.pullUpdates(session).syncState };
+    const payload = { appVersion: '0.5.0', schemaVersion: 5, exportedAt: now(), cache_cards: this.cards.filter((c) => !c.deprecatedAt), cache_prints: this.prints.filter((p) => !p.deprecatedAt), cache_aliases: this.aliases, cache_image_features: this.imageFeatures, feature_packs: this.featurePacks, claims: this.claims, draft_statuses: this.draftStatuses, user_collection: [], user_scans: [], outbox_proposals: [], outbox_observations: [], outbox_drafts: [], sync_state: this.pullUpdates(session).syncState };
     return { ...payload, checksum: `sha256-${btoa(JSON.stringify(payload)).slice(0, 16)}` };
   }
 

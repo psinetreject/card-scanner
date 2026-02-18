@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CameraPreview } from '../components/CameraPreview';
 import { preprocessImage } from '../../core/preprocess';
+import { computeAverageHash, extractVisualCrops } from '../../core/imageHash';
 import { useServices } from '../hooks/useServices';
 
 export function ScanPage() {
@@ -11,18 +12,23 @@ export function ScanPage() {
   const [status, setStatus] = useState('Ready.');
 
   const onCapture = async (blob: Blob) => {
-    setStatus('Preprocessing + OCR...');
+    setStatus('Visual preprocessing + matching...');
     await services.storage.init();
-    const processed = await preprocessImage(blob, { grayscale: true, contrastBoost: 90 });
-    const processedBlob = await new Promise<Blob>((resolve) => processed.toBlob((x) => resolve(x!), 'image/jpeg', 0.9));
-    const ocr = await services.ocr.extract(processedBlob);
-    const match = await services.matcher.run({ extractedName: ocr.name, extractedSetCode: ocr.setCode });
+    const processed = await preprocessImage(blob, { grayscale: false, contrastBoost: 60 });
+    const crops = await extractVisualCrops(processed);
+    const [hashFull, hashArt] = await Promise.all([computeAverageHash(crops.full), computeAverageHash(crops.art)]);
 
-    const scanId = crypto.randomUUID();
-    navigate(`/results/${scanId}`, {
+    const processedBlob = await new Promise<Blob>((resolve) => processed.toBlob((x) => resolve(x!), 'image/jpeg', 0.9));
+    const ocrPromise = services.ocr.extract(processedBlob).catch(() => ({ text: '', confidence: 0 }));
+
+    const ocr = await ocrPromise;
+    const match = await services.matcher.run({ visualHashFull: hashFull, visualHashArt: hashArt, extractedSetCode: ocr.setCode, extractedName: ocr.name });
+
+    navigate(`/results/${crypto.randomUUID()}`, {
       state: {
         ocr,
         match,
+        visual: { hashFull, hashArt },
         thumb: processed.toDataURL('image/jpeg', 0.6),
       },
     });
@@ -31,12 +37,12 @@ export function ScanPage() {
   return (
     <section>
       <h2>Scan</h2>
-      <p className="panel">Live camera + local OCR + local cache matching (offline-first).</p>
+      <p className="panel">Primary identification is visual matching (pHash), OCR is optional assist.</p>
       <div className="panel">
         <label>
           <input type="checkbox" checked={autoScan} onChange={(e) => setAutoScan(e.target.checked)} /> Auto-scan (MVP placeholder)
         </label>
-        <p><small className="muted">Status: {status}. Focus + brightness hints appear in camera panel.</small></p>
+        <p><small className="muted">Status: {status}. Visual confidence drives ranking; OCR only validates/disambiguates.</small></p>
       </div>
       <CameraPreview camera={services.camera} onCapture={onCapture} />
     </section>

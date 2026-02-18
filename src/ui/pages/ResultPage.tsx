@@ -12,8 +12,9 @@ export function ResultPage() {
   const state = location.state as
     | {
         ocr: { text: string; name?: string; setCode?: string; confidence?: number };
+        visual: { hashFull: string; hashArt: string };
         match: {
-          top?: { card: { id: string; name: string; type?: string }; print?: { printId: string; setCode: string }; score: number; reason: string };
+          top?: { card: { id: string; name: string; type?: string }; print?: { printId: string; setCode: string }; score: number; reason: string; details?: string };
           alternatives: { card: { id: string; name: string }; score: number; reason: string }[];
           needsConfirmation: boolean;
         };
@@ -70,6 +71,8 @@ export function ResultPage() {
         setCode: state.ocr.setCode ?? state.match.top?.print?.setCode,
         notes,
       },
+      visualFeatures: { phashFull: state.visual.hashFull, phashArt: state.visual.hashArt },
+      evidenceImageThumb: state.thumb,
       status: 'queued',
     });
     setMessage('Draft created and queued for moderator review.');

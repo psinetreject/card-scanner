@@ -5,6 +5,8 @@ import type {
   Card,
   Claim,
   Draft,
+  FeaturePack,
+  ImageFeature,
   DraftStatusCache,
   MatchResult,
   ModerationProposal,
@@ -38,6 +40,10 @@ export interface IStorageService {
   getCacheCards(): Promise<Card[]>;
   getCachePrints(): Promise<Print[]>;
   getCacheAliases(): Promise<Alias[]>;
+  getCacheImageFeatures(): Promise<ImageFeature[]>;
+  getFeaturePacks(): Promise<FeaturePack[]>;
+  installFeaturePack(packId: string): Promise<void>;
+  removeFeaturePack(packId: string): Promise<void>;
   saveScan(scan: UserScan): Promise<void>;
   getScans(): Promise<UserScan[]>;
   getCollection(): Promise<UserCollectionEntry[]>;
@@ -67,7 +73,7 @@ export interface IAuthService {
 }
 
 export interface ISyncService {
-  pullUpdates(session: AuthSession): Promise<{ cards: Card[]; prints: Print[]; aliases: Alias[]; claims: Claim[]; draftStatuses: DraftStatusCache[]; syncState: SyncState }>;
+  pullUpdates(session: AuthSession): Promise<{ cards: Card[]; prints: Print[]; aliases: Alias[]; imageFeatures: ImageFeature[]; featurePacks: FeaturePack[]; claims: Claim[]; draftStatuses: DraftStatusCache[]; syncState: SyncState }>;
   pushProposals(session: AuthSession, proposals: OutboxProposal[]): Promise<{ acceptedIds: string[]; failed: { id: string; error: string }[] }>;
   pushObservations(session: AuthSession, observations: OutboxObservation[]): Promise<{ acceptedIds: string[]; failed: { id: string; error: string }[] }>;
   pushDrafts(session: AuthSession, drafts: OutboxDraft[]): Promise<{ acceptedIds: string[]; failed: { id: string; error: string }[] }>;
@@ -113,6 +119,8 @@ export type LocalBundle = {
   cache_cards: Card[];
   cache_prints: Print[];
   cache_aliases: Alias[];
+  cache_image_features?: ImageFeature[];
+  feature_packs?: FeaturePack[];
   claims?: Claim[];
   draft_statuses?: DraftStatusCache[];
   user_collection: UserCollectionEntry[];
