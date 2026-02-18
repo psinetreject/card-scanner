@@ -54,33 +54,42 @@ Dedicated `/login` with manual form + one-click test logins:
 ```bash
 npm run dev
 npm run dev:lan
+npm run dev:lan:https
 npm run dev:lan:5174
 npm run preview:lan
 ```
 
-## Test on Phone (LAN)
-1. Start LAN server:
+## Test on Phone over LAN (HTTPS)
+1. Start LAN HTTPS dev server:
    ```bash
-   npm run dev:lan
+   npm run dev:lan:https
    ```
-2. Find LAN IP:
+2. Find your computer LAN IP:
    - macOS/Linux: `ip a` or `ifconfig`
    - Windows: `ipconfig`
 3. Open on phone (same Wi-Fi):
-   - `http://<LAN-IP>:5173`
+   - `https://<LAN-IP>:5173`
+4. Allow camera permission when prompted.
 
-### Mobile camera notes
-- Camera permission must be granted in browser.
-- Some mobile browsers require HTTPS for camera on non-localhost origins.
-- Prefer HTTPS dev certs for reliability on iOS.
+### mkcert local certificate setup (recommended)
+Vite dev server is configured for HTTPS and can use local cert files from `certs/`.
 
-### Firewall & safety
-- Open local firewall port 5173 for LAN only.
-- Do **not** port-forward router/NAT.
-- Keep testing LAN-only.
+Generate certs (example):
+```bash
+mkcert -install
+mkdir -p certs
+mkcert -key-file certs/dev-key.pem -cert-file certs/dev-cert.pem localhost 127.0.0.1 ::1 <LAN-IP>
+```
 
-## Optional HTTPS (local-only)
-Use mkcert and Vite `server.https` config with local cert/key, then open `https://<LAN-IP>:5173`.
+If mobile shows certificate warnings, install and trust the mkcert root CA on that device.
+
+> Note: `vite-plugin-mkcert` can also be used in environments where npm registry access allows installing it.
+
+### Firewall & LAN safety
+- Allow local firewall port `5173` on **private/LAN** profile only.
+- Ensure phone and dev machine are on the same LAN/Wi-Fi.
+- **Do not** port-forward router/NAT.
+- This setup is for local development only (not public internet exposure).
 
 ## Practical browser CV limits
 - In-browser CV/hashing is CPU-constrained and less robust on low-end devices.
@@ -90,11 +99,10 @@ Use mkcert and Vite `server.https` config with local cert/key, then open `https:
 ## Future native path
 Keep `core` matching contracts portable; replace hashing/feature extraction with native OpenCV pipeline and keep sync/consensus/draft APIs stable.
 
-
 ## Camera Permissions Troubleshooting
 - Open `/scan` and click **Enable Camera** to trigger browser permission prompt.
 - If denied, use **Try again** after allowing Camera in site settings (lock/camera icon in address bar).
 - If error says no device found, verify your device has an available camera.
 - If camera is busy (`NotReadableError`), close other apps/tabs using the camera.
-- On mobile LAN testing, prefer HTTPS if camera is blocked on non-localhost origins.
-- See **Test on Phone (LAN)** and optional HTTPS notes above.
+- If `window.isSecureContext` is false, `/scan` shows: **“Camera requires HTTPS. Use LAN HTTPS dev mode.”**
+- See **Test on Phone over LAN (HTTPS)** above.

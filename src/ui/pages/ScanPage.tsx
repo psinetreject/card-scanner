@@ -10,6 +10,7 @@ export function ScanPage() {
   const navigate = useNavigate();
   const [autoScan, setAutoScan] = useState(false);
   const [status, setStatus] = useState('Ready.');
+  const insecureContext = !window.isSecureContext;
 
   const onCapture = async (blob: Blob) => {
     setStatus('Visual preprocessing + matching...');
@@ -38,6 +39,7 @@ export function ScanPage() {
     <section>
       <h2>Scan</h2>
       <p className="panel">Primary identification is visual matching (pHash), OCR is optional assist.</p>
+      {insecureContext && <p className="panel status-warn">Camera requires HTTPS. Use LAN HTTPS dev mode.</p>}
       <div className="panel">
         <label>
           <input type="checkbox" checked={autoScan} onChange={(e) => setAutoScan(e.target.checked)} /> Auto-scan (MVP placeholder)

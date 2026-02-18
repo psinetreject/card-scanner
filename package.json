@@ -10,7 +10,8 @@
     "lint": "eslint . --ext ts,tsx --max-warnings 0",
     "dev:lan": "vite --host 0.0.0.0 --port 5173",
     "dev:lan:5174": "vite --host 0.0.0.0 --port 5174",
-    "preview:lan": "vite preview --host 0.0.0.0 --port 4173"
+    "preview:lan": "vite preview --host 0.0.0.0 --port 4173",
+    "dev:lan:https": "vite --host 0.0.0.0 --port 5173"
   },
   "dependencies": {
     "idb": "^8.0.0",
@@ -29,6 +30,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "vite-plugin-mkcert": "^1.17.6"
   }
 }
