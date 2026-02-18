@@ -83,7 +83,13 @@ mkcert -key-file certs/dev-key.pem -cert-file certs/dev-cert.pem localhost 127.0
 
 If mobile shows certificate warnings, install and trust the mkcert root CA on that device.
 
-> Note: `vite-plugin-mkcert` can also be used in environments where npm registry access allows installing it.
+If you see an error like **"Cannot communicate securely with peer: no common encryption algorithm(s)"**:
+- delete any old cert files in `certs/` and regenerate with mkcert
+- ensure RSA-style certs are used (avoid legacy/unsupported cert formats)
+- restart the dev server after regenerating certs
+- verify phone OS/browser are up to date and support TLS 1.2+
+
+> Note: this project is configured with `vite-plugin-mkcert` and TLS 1.2 minimum for LAN HTTPS dev.
 
 ### Firewall & LAN safety
 - Allow local firewall port `5173` on **private/LAN** profile only.
