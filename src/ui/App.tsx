@@ -38,7 +38,7 @@ export function App() {
     <div className="app-shell">
       <header>
         <h1>Yu-Gi-Oh! Scanner MVP</h1>
-        <p>{session ? <>Signed in as <strong>{session.userId}</strong> ({session.role})</> : 'Please sign in'}</p>
+        <p>{session ? <>Signed in as <strong>{session.username}</strong> ({session.role})</> : 'Please sign in'}</p>
         {session && <button className="secondary" onClick={signOut}>Sign out</button>}
       </header>
       <main>

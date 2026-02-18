@@ -17,4 +17,10 @@ export class MockModerationService implements IModerationService {
   async getConsensusQueue(session: AuthSession) { return mockServer.getConsensusQueue(session); }
   async setClaimStatus(session: AuthSession, claimId: string, action: 'accepted' | 'rejected' | 'superseded', _note?: string) { mockServer.setClaimStatus(session, claimId, action); }
   async getObservationsForClaim(session: AuthSession, claimId: string) { return mockServer.getObservationsForClaim(session, claimId); }
+  async getDraftQueue(session: AuthSession) { return mockServer.getDraftQueue(session); }
+  async markDraftReviewing(session: AuthSession, draftId: string) { mockServer.markDraftReviewing(session, draftId); }
+  async publishDraft(session: AuthSession, draftId: string, editedPayload?: Record<string, unknown>) { mockServer.publishDraft(session, draftId, editedPayload); }
+  async rejectDraft(session: AuthSession, draftId: string, note?: string) { mockServer.rejectDraft(session, draftId, note); }
+  async requestDraftChanges(session: AuthSession, draftId: string, note?: string) { mockServer.requestDraftChanges(session, draftId, note); }
+  async getPublishEvents(session: AuthSession) { return mockServer.getPublishEvents(session); }
 }

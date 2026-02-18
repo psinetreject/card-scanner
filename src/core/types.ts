@@ -1,4 +1,4 @@
-export type Role = 'viewer' | 'contributor' | 'moderator' | 'admin';
+export type Role = 'guest' | 'viewer' | 'contributor' | 'moderator' | 'admin';
 
 export type ConsensusMeta = {
   consensusScore: number;
@@ -161,6 +161,52 @@ export type TrustProfile = {
   spamFlagCount: number;
 };
 
+export type Draft = {
+  draftId: string;
+  createdAt: string;
+  createdBy: string;
+  sourceScanRef?: string;
+  targetType: 'card' | 'print' | 'unknown';
+  targetId?: string;
+  extractedFields: Record<string, unknown>;
+  proposedPayload: Record<string, unknown>;
+  status: 'new' | 'reviewing' | 'published' | 'rejected' | 'request_changes';
+  reviewNotes?: string;
+  publishedAt?: string;
+  publishedBy?: string;
+  confidence?: number;
+};
+
+export type OutboxDraft = {
+  localDraftId: string;
+  createdAt: string;
+  sourceScanId: string;
+  proposedPayload: Record<string, unknown>;
+  extractedFields: Record<string, unknown>;
+  targetType: 'card' | 'print' | 'unknown';
+  targetId?: string;
+  status: 'queued' | 'sent' | 'failed';
+  lastError?: string;
+};
+
+export type DraftStatusCache = {
+  draftId: string;
+  status: Draft['status'];
+  updatedAt: string;
+  reviewNotes?: string;
+};
+
+export type PublishEvent = {
+  eventId: string;
+  draftId: string;
+  timestamp: string;
+  action: 'publish' | 'reject' | 'request_changes';
+  actorRole: Role;
+  actorId: string;
+  diffApplied: Record<string, unknown>;
+  resultingTargetIds: string[];
+};
+
 export type ModerationProposal = {
   proposalId: string;
   createdAt: string;
@@ -179,10 +225,10 @@ export type AuditLogEntry = {
   auditId: string;
   timestamp: string;
   proposalId?: string;
-  action: 'accepted' | 'rejected' | 'rollback' | 'admin_edit' | 'claim_accepted' | 'claim_rejected' | 'claim_superseded';
+  action: 'accepted' | 'rejected' | 'rollback' | 'admin_edit' | 'claim_accepted' | 'claim_rejected' | 'claim_superseded' | 'draft_published' | 'draft_rejected';
   actorUserId: string;
   actorRole: Role;
-  entity: 'card' | 'print' | 'alias' | 'claim';
+  entity: 'card' | 'print' | 'alias' | 'claim' | 'draft';
   entityId: string;
   diff: ProposalDiff;
   notes?: string;
@@ -225,6 +271,7 @@ export type MatchResult = {
 
 export type AuthSession = {
   token: string;
+  username: string;
   userId: string;
   deviceId: string;
   role: Role;

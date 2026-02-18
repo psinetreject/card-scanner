@@ -4,13 +4,16 @@ import type {
   AuthSession,
   Card,
   Claim,
+  Draft,
+  DraftStatusCache,
   MatchResult,
   ModerationProposal,
   Observation,
+  OutboxDraft,
   OutboxObservation,
   OutboxProposal,
   Print,
-  Role,
+  PublishEvent,
   ScanInput,
   SyncState,
   UserCollectionEntry,
@@ -43,6 +46,10 @@ export interface IStorageService {
   listProposals(): Promise<OutboxProposal[]>;
   queueObservation(observation: OutboxObservation): Promise<void>;
   listObservations(): Promise<OutboxObservation[]>;
+  queueDraft(draft: OutboxDraft): Promise<void>;
+  listDrafts(): Promise<OutboxDraft[]>;
+  getDraftStatusCache(): Promise<DraftStatusCache[]>;
+  setDraftStatusCache(status: DraftStatusCache): Promise<void>;
   setSyncState(state: SyncState): Promise<void>;
   getSyncState(): Promise<SyncState>;
   importSnapshot(snapshot: LocalBundle, mode: 'replace' | 'merge'): Promise<void>;
@@ -53,16 +60,17 @@ export interface IStorageService {
 }
 
 export interface IAuthService {
-  login(identifier: string, password: string): Promise<AuthSession>;
+  login(username: string, password: string): Promise<AuthSession>;
   continueAsGuest(): Promise<AuthSession>;
   logout(): Promise<void>;
   getSession(): Promise<AuthSession | undefined>;
 }
 
 export interface ISyncService {
-  pullUpdates(session: AuthSession): Promise<{ cards: Card[]; prints: Print[]; aliases: Alias[]; claims: Claim[]; syncState: SyncState }>;
+  pullUpdates(session: AuthSession): Promise<{ cards: Card[]; prints: Print[]; aliases: Alias[]; claims: Claim[]; draftStatuses: DraftStatusCache[]; syncState: SyncState }>;
   pushProposals(session: AuthSession, proposals: OutboxProposal[]): Promise<{ acceptedIds: string[]; failed: { id: string; error: string }[] }>;
   pushObservations(session: AuthSession, observations: OutboxObservation[]): Promise<{ acceptedIds: string[]; failed: { id: string; error: string }[] }>;
+  pushDrafts(session: AuthSession, drafts: OutboxDraft[]): Promise<{ acceptedIds: string[]; failed: { id: string; error: string }[] }>;
   downloadSnapshotBundle(session: AuthSession): Promise<LocalBundle & { checksum?: string }>;
 }
 
@@ -78,6 +86,12 @@ export interface IModerationService {
   getConsensusQueue(session: AuthSession): Promise<Claim[]>;
   setClaimStatus(session: AuthSession, claimId: string, action: 'accepted' | 'rejected' | 'superseded', note?: string): Promise<void>;
   getObservationsForClaim(session: AuthSession, claimId: string): Promise<Observation[]>;
+  getDraftQueue(session: AuthSession): Promise<Draft[]>;
+  markDraftReviewing(session: AuthSession, draftId: string): Promise<void>;
+  publishDraft(session: AuthSession, draftId: string, editedPayload?: Record<string, unknown>): Promise<void>;
+  rejectDraft(session: AuthSession, draftId: string, note?: string): Promise<void>;
+  requestDraftChanges(session: AuthSession, draftId: string, note?: string): Promise<void>;
+  getPublishEvents(session: AuthSession): Promise<PublishEvent[]>;
 }
 
 export interface IMatchingService {
@@ -100,10 +114,12 @@ export type LocalBundle = {
   cache_prints: Print[];
   cache_aliases: Alias[];
   claims?: Claim[];
+  draft_statuses?: DraftStatusCache[];
   user_collection: UserCollectionEntry[];
   user_scans: UserScan[];
   outbox_proposals: OutboxProposal[];
   outbox_observations?: OutboxObservation[];
+  outbox_drafts?: OutboxDraft[];
   sync_state?: SyncState;
 };
 

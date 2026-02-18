@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --max-warnings 0",
+    "dev:lan": "vite --host 0.0.0.0 --port 5173",
+    "dev:lan:5174": "vite --host 0.0.0.0 --port 5174",
+    "preview:lan": "vite preview --host 0.0.0.0 --port 4173"
   },
   "dependencies": {
     "idb": "^8.0.0",

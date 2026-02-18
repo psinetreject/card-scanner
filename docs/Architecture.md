@@ -1,43 +1,43 @@
 # Architecture Overview
 
 ## Central DB is authoritative
-Canonical entities (`cards`, `prints`, `aliases`, images metadata) are cloud-owned and versioned.
+Canonical entities (`cards`, `prints`, `aliases`) are cloud-owned and versioned.
 
-## Local DB partitions
-- `cache_*`: mirrored canonical data (+ claim metadata)
-- `user_*`: collection/scans/settings
-- `outbox_proposals`: queued moderation proposals
-- `outbox_observations`: queued consensus observations
-
-## Auth-gated client shell
+## Auth + route gating
 - `/login` is public
-- Main app routes require authenticated session
+- Main routes require authenticated session
 - `/admin/*` requires moderator/admin role checks
 
-## Moderation-only canonical writes
-Scanning client submits proposals and observations only.
-Moderators/admins accept/reject proposals/claims; accepted writes bump canonical versions.
+## Local DB partitions
+- `cache_*`: canonical mirror + consensus/draft status metadata
+- `user_*`: local collection/scans/settings
+- `outbox_proposals`: moderated edit proposals
+- `outbox_observations`: consensus evidence submissions
+- `outbox_drafts`: publishable card/print drafts from uncertain scans
 
-## Consensus model
-- `observations`: independent field/value evidence submissions
-- `claims`: aggregated winning-value candidates with consensus metrics
-- `trust_profiles`: contributor reputation used for score weighting
+## Write safety model
+- No direct canonical writes from scanner flow.
+- Contributors submit observations/proposals/drafts.
+- Moderators/Admin review and publish.
 
-### MVP policy
-- one observation/principal per target+field window (24h)
-- weighted consensus score with OCR + capture quality + reputation
-- auto-accept high-confidence claims
-- otherwise claim remains open for moderation
+## Consensus entities
+- `observations`
+- `claims`
+- `trust_profiles`
 
-## Integrity protections
-- Validation (name/type required, setCode format, ATK/DEF range, level range)
-- Rate limiting proposals per device
-- Reputation heuristic and spam controls
-- Diff-based audit trail and rollback history
-- Soft-delete-ready canonical records (`deprecatedAt`)
+## Draft publishing entities
+- `drafts`
+- `publish_events`
 
 ## Sync loop
-1. Pull canonical updates + claim statuses
-2. Upload outbox proposals
-3. Upload outbox observations
-4. Moderator/consensus outcomes applied to canonical DB
+1. Pull canonical + claim + draft status updates.
+2. Upload proposals.
+3. Upload observations.
+4. Upload drafts.
+5. Moderator/admin decisions become visible on next sync.
+
+## Role policy
+- Guest: local scanning/collection only (no sync writes)
+- Contributor: can submit observations/proposals/drafts
+- Moderator/Admin: can review claims/drafts and publish
+- Admin: rollback and privileged canonical management
