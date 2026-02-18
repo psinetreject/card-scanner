@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+function resolveHttpsOption() {
+  const keyPath = path.resolve('certs', 'dev-key.pem');
+  const certPath = path.resolve('certs', 'dev-cert.pem');
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+  }
+  return true;
+}
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true,
+    port: 5173,
+    https: resolveHttpsOption(),
+  },
+});
